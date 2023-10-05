@@ -210,11 +210,11 @@ with st.expander("Input:", True):
             st.markdown('**:red[Price included wheeling charge*]**')
             slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p1', step=0.01, on_change=update_numin)
             num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p1', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
         else:
             st.markdown('**:red[Price included wheeling charge*]**')
             st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
             slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p1', step=0.01, on_change=update_numin1, disabled=True) 
             num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p1', step=0.01, on_change=update_slider1, disabled=True)
             num_p1 = 4.62
@@ -236,11 +236,11 @@ with st.expander("Input:", True):
             st.markdown('**:red[Price included wheeling charge*]**')
             slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p2', step=0.01, on_change=update_numin)
             num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p2', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
         else:
             st.markdown('**:red[Price included wheeling charge*]**')
             st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
             slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p2', step=0.01, on_change=update_numin1, disabled=True) 
             num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p2', step=0.01, on_change=update_slider1, disabled=True)
             num_p2 = 4.62   
@@ -262,11 +262,11 @@ with st.expander("Input:", True):
             st.markdown('**:red[Price included wheeling charge*]**')
             slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p3', step=0.01, on_change=update_numin)
             num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p3', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
         else:
             st.markdown('**:red[Price included wheeling charge*]**')
             st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("N-1 trade period price is 4.62 ฿/kWh")
+            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
             slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p3', step=0.01, on_change=update_numin1, disabled=True) 
             num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p3', step=0.01, on_change=update_slider1, disabled=True)
             num_p3 = 4.62
@@ -288,11 +288,11 @@ with st.expander("Input:", True):
             st.markdown('**:blue[Price]**')
             slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p4', step=0.01, on_change=update_numin)
             num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p4', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
         else:
             st.markdown('**:blue[Price]**')
             st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
             slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p4', step=0.01, on_change=update_numin1, disabled=True) 
             num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p4', step=0.01, on_change=update_slider1, disabled=True)
             num_p4 = 3.75
@@ -313,11 +313,11 @@ with st.expander("Input:", True):
             st.markdown('**:blue[Price]**')
             slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p5', step=0.01, on_change=update_numin)
             num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p5', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
         else:
             st.markdown('**:blue[Price]**')
             st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
             slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p5', step=0.01, on_change=update_numin1, disabled=True) 
             num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p5', step=0.01, on_change=update_slider1, disabled=True)
             num_p5 = 3.75
@@ -338,11 +338,11 @@ with st.expander("Input:", True):
             st.markdown('**:blue[Price]**')
             slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p6', step=0.01, on_change=update_numin)
             num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p6', step=0.01, on_change=update_slider)
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
         else:
             st.markdown('**:blue[Price]**')
             st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("N-1 trade period price is 3.75 ฿/kWh")
+            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
             slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p6', step=0.01, on_change=update_numin1, disabled=True) 
             num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p6', step=0.01, on_change=update_slider1, disabled=True)
             num_p6 = 3.75

@@ -526,11 +526,53 @@ with st.expander("Input:", True):
 but1,but2,but3 = st.columns(3)
 
 if st.button(":bar_chart: Run P2P Market Clearing"):
+    def save_vars(to_save_vars: list[str]):
+        for var in to_save_vars:
+            st.session_state[var] = globals()[var]
+
+    save_vars([
+        'p1', 'q1', 'p2', 'q1', 'p3', 'q3', 
+        'p4', 'q4', 'p5', 'q5', 'p6', 'q6'
+    ])
+
+    sum_q_bid = sum([q1,q2,q3])
+    avg_bid = sum([p1,p2,p3])/3
+    save_vars(['sum_q_bid', 'avg_bid'])
+
+    sum_q_offer = sum([q4,q5,q6])
+    avg_offer = sum([p4,p5,p6])/3
+    save_vars(['sum_q_offer', 'avg_offer'])
+
+    mar = pm.Market()
+    mar.accept_bid(q1, round(p1,2), 0, True, 0, True)
+    mar.accept_bid(q2, round(p2,2), 1, True, 0, True)
+    mar.accept_bid(q3, round(p3,2), 2, True, 0, True)
+    mar.accept_bid(q4, round(p4,2), 3, False, 0, True)
+    mar.accept_bid(q5, round(p5,2), 4, False, 0, True)
+    mar.accept_bid(q6, round(p6,2), 5, False, 0, True)
+    bids = mar.bm.get_df()
+    transactions, extras = mar.run('p2p-egat') # run the p2p mechanism
+
+    save_vars(['mar', 'bids', 'transactions', 'extras'])
+
+    st.session_state['run'] = True
+
+
+if 'run' in st.session_state:
+    def restore_vars(to_save_vars: list[str]):
+        for var in to_save_vars:
+            globals()[var] = st.session_state[var]
+
+    restore_vars([
+        'p1', 'q1', 'p2', 'q1', 'p3', 'q3', 
+        'p4', 'q4', 'p5', 'q5', 'p6', 'q6'
+    ])
+    restore_vars(['sum_q_bid', 'avg_bid'])
+    restore_vars(['sum_q_offer', 'avg_offer'])
+
     st.success('Optimization completed.', icon="✅")
     colMatching1, colMatching2, colMatching3, res4 = st.columns([1.5,1.5,5,2])
     with colMatching1:
-        sum_q_bid = sum([q1,q2,q3])
-        avg_bid = sum([p1,p2,p3])/3
         st.markdown(':red[Demand bids for matching:]')
         st.caption(f'Sum bid quantity = {sum_q_bid}')
         st.caption(f'Average bid quantity = {sum_q_bid/3:.2f}')
@@ -548,8 +590,6 @@ if st.button(":bar_chart: Run P2P Market Clearing"):
         st.caption('Before matching:')
         st.caption('Included wheeling charge')
     with colMatching2:
-        sum_q_offer = sum([q4,q5,q6])
-        avg_offer = sum([p4,p5,p6])/3
         st.markdown(':blue[Supply offers for matching:]')
         st.caption(f'Sum offer quantity = {sum_q_offer}')
         st.caption(f'Average offer quantity = {sum_q_offer/3:.2f}')
@@ -565,19 +605,8 @@ if st.button(":bar_chart: Run P2P Market Clearing"):
         Quantity = {q6}
         Price = {p6:.2f}''')
     with colMatching3:
-        mar = pm.Market()
-        mar.accept_bid(q1, round(p1,2), 0, True, 0, True)
-        mar.accept_bid(q2, round(p2,2), 1, True, 0, True)
-        mar.accept_bid(q3, round(p3,2), 2, True, 0, True)
-        mar.accept_bid(q4, round(p4,2), 3, False, 0, True)
-        mar.accept_bid(q5, round(p5,2), 4, False, 0, True)
-        mar.accept_bid(q6, round(p6,2), 5, False, 0, True)
-        bids = mar.bm.get_df()
-        transactions, extras = mar.run('p2p-egat') # run the p2p mechanism
-        #stats = mar.statistics()
-        #ax = mar.plot_method('p2p')
-        #st.pyplot(ax)
-        #st.pyplot(mar.plot_method('p2p'))
+        restore_vars(['mar', 'bids', 'transactions', 'extras'])
+
         st.markdown(':orange[Market Clearing Chart:]')
         t1, t2  = st.tabs(['Network Diagram', 'Demand/Supply Curve'])
         with t1:
@@ -635,7 +664,7 @@ if st.button(":bar_chart: Run P2P Market Clearing"):
                         st.markdown(f"**Matched pair {cnt}:**")
                         st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
                         st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p1-wheelings[0][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
-                        st.caption(f"{row['price']+wheelings[0][row['userB']-1]:.2f} ฿/kWh w/ wheeling charge {wheelings[0][row['userB']-1]:.2f} ฿/kWh")
+                        st.caption(f"{row['price']+wheelings[0][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[0][row['userB']-1]:.2f} ฿/kWh")
                         st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
                         st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
                         st.markdown(f"Pay :violet[{wheelings[0][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
@@ -779,5 +808,6 @@ if st.button(":bar_chart: Run P2P Market Clearing"):
                     st.markdown(f':warning: Excess to grid :orange[{q6_excess_to_grid} kWh]')
 else:
     st.info('Edit bids/offers before press button.', icon="ℹ️")
+
 st.write('---')
 st.markdown(':gray[This project is for demo purpose only. [Torsak]]')

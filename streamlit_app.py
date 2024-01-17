@@ -423,14 +423,14 @@ with input_container:
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.markdown(":one: **Player 1 :red[- Buyer: ]**")
-                mode1 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode1', index=1)
+                mode1 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode1', index=1, disabled=is_running)
                 st.markdown('**:red[Quantity from actual]**')
-                slide_q1 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q1', step=1, on_change=update_numin)
-                num_q1 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q1', step=1, on_change=update_slider)
+                slide_q1 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q1', step=1, on_change=update_numin, disabled=is_running)
+                num_q1 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q1', step=1, on_change=update_slider, disabled=is_running)
                 if mode1 == 'Advanced':
                     st.markdown('**:red[Price included wheeling charge*]**')
-                    slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p1', step=0.01, on_change=update_numin)
-                    num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p1', step=0.01, on_change=update_slider)
+                    slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p1', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p1', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
                 else:
                     st.markdown('**:red[Price included wheeling charge*]**')
@@ -449,14 +449,14 @@ with input_container:
                 st.caption('*Included wheeling charge')
             with col2:
                 st.markdown(":two: **Player 2 :red[- Buyer: ]**")
-                mode2 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode2', index=1)
+                mode2 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode2', index=1, disabled=is_running)
                 st.markdown('**:red[Quantity from actual]**')
-                slide_q2 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q2', step=1, on_change=update_numin)
-                num_q2 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q2', step=1, on_change=update_slider)
+                slide_q2 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q2', step=1, on_change=update_numin, disabled=is_running)
+                num_q2 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q2', step=1, on_change=update_slider, disabled=is_running)
                 if mode2 == 'Advanced':
                     st.markdown('**:red[Price included wheeling charge*]**')
-                    slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p2', step=0.01, on_change=update_numin)
-                    num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p2', step=0.01, on_change=update_slider)
+                    slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p2', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p2', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
                 else:
                     st.markdown('**:red[Price included wheeling charge*]**')
@@ -475,14 +475,14 @@ with input_container:
                 st.caption('*Included wheeling charge')
             with col3:
                 st.markdown(":three: **Player 3 :red[- Buyer: ]**")
-                mode3 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode3', index=1)
+                mode3 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode3', index=1, disabled=is_running)
                 st.markdown('**:red[Quantity from actual]**')
-                slide_q3 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q3', step=1, on_change=update_numin)
-                num_q3 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q3', step=1, on_change=update_slider)
+                slide_q3 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q3', step=1, on_change=update_numin, disabled=is_running)
+                num_q3 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q3', step=1, on_change=update_slider, disabled=is_running)
                 if mode3 == 'Advanced':
                     st.markdown('**:red[Price included wheeling charge*]**')
-                    slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p3', step=0.01, on_change=update_numin)
-                    num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p3', step=0.01, on_change=update_slider)
+                    slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p3', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p3', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
                 else:
                     st.markdown('**:red[Price included wheeling charge*]**')
@@ -504,14 +504,14 @@ with input_container:
             col4, col5, col6 = st.columns(3)
             with col4:
                 st.markdown(":four: **Player 4 :blue[- Seller: ]**")
-                mode4 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode4', index=1)
+                mode4 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode4', index=1, disabled=is_running)
                 st.markdown('**:blue[Quantity from actual]**')
-                slide_q4 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q4', step=1, on_change=update_numin)
-                num_q4 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q4', step=1, on_change=update_slider)
+                slide_q4 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q4', step=1, on_change=update_numin, disabled=is_running)
+                num_q4 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q4', step=1, on_change=update_slider, disabled=is_running)
                 if mode4 == 'Advanced':
                     st.markdown('**:blue[Price]**')
-                    slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p4', step=0.01, on_change=update_numin)
-                    num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p4', step=0.01, on_change=update_slider)
+                    slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p4', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p4', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
                 else:
                     st.markdown('**:blue[Price]**')
@@ -531,12 +531,12 @@ with input_container:
                 st.markdown(":five: **Player 5 :blue[- Seller: ]**")
                 mode5 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode5', index=1)
                 st.markdown('**:blue[Quantity from actual]**')
-                slide_q5 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q5', step=1, on_change=update_numin)
-                num_q5 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q5', step=1, on_change=update_slider)
+                slide_q5 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q5', step=1, on_change=update_numin, disabled=is_running)
+                num_q5 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q5', step=1, on_change=update_slider, disabled=is_running)
                 if mode5 == 'Advanced':
                     st.markdown('**:blue[Price]**')
-                    slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p5', step=0.01, on_change=update_numin)
-                    num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p5', step=0.01, on_change=update_slider)
+                    slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p5', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p5', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
                 else:
                     st.markdown('**:blue[Price]**')
@@ -556,12 +556,12 @@ with input_container:
                 st.markdown(":six: **Player 6 :blue[- Seller: ]**")
                 mode6 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode6', index=1)
                 st.markdown('**:blue[Quantity from actual]**')
-                slide_q6 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q6', step=1, on_change=update_numin)
-                num_q6 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q6', step=1, on_change=update_slider)
+                slide_q6 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q6', step=1, on_change=update_numin, disabled=is_running)
+                num_q6 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q6', step=1, on_change=update_slider, disabled=is_running)
                 if mode6 == 'Advanced':
                     st.markdown('**:blue[Price]**')
-                    slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p6', step=0.01, on_change=update_numin)
-                    num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p6', step=0.01, on_change=update_slider)
+                    slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p6', step=0.01, on_change=update_numin, disabled=is_running)
+                    num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p6', step=0.01, on_change=update_slider, disabled=is_running)
                     st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
                 else:
                     st.markdown('**:blue[Price]**')

@@ -614,16 +614,16 @@ with colRunning:
         with st.empty():
             colProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,4])
             with colTimer:
-                if has_all_vars(['running_start', 'running_end']):
+                if has_all_vars(['running_start', 'running_actual_end']):
                     current_time: datetime.datetime = st.session_state['running_start']
-                    target_time: datetime.datetime = st.session_state['running_end']
+                    target_time: datetime.datetime = st.session_state['running_actual_end']
                     time_delta = target_time - current_time
 
-                    hours = int(time_delta.total_seconds() / (60*60))
                     minutes = int(time_delta.total_seconds() / (60))
-                    seconds = int(time_delta.total_seconds())
+                    seconds = int(time_delta.total_seconds() % 60)
+                    milliseconds = int((time_delta.total_seconds() * 1000) % 1000)
 
-                    st.metric("Target Run Time", f'{hours:02d}:{minutes:02d}:{seconds:02d}')
+                    st.metric("Run Time", f'{minutes:02d}:{seconds:02d}.{milliseconds:03d}')
 
             with colProfit:
                 if 'run' in st.session_state:
@@ -675,10 +675,8 @@ with colRunning:
                     target_time: datetime.datetime = st.session_state['running_end']
                     time_delta = target_time - current_time
 
-                    hours = int(time_delta.total_seconds() / (60*60))
                     minutes = int(time_delta.total_seconds() / (60))
                     seconds = int(time_delta.total_seconds())
-
 
                     if time_delta.total_seconds() <= 0:
                         st.session_state['run'] = True
@@ -686,12 +684,14 @@ with colRunning:
 
                         is_running = False
 
+                        st.session_state['running_actual_end'] = datetime.datetime.now()
+
                         # if run_counter > 0:
                         st.rerun()
 
                         break
                     else:
-                        st.metric("Running", f'{hours:02d}:{minutes:02d}:{seconds:02d}')
+                        st.metric("Running", f'{minutes:02d}:{seconds:02d}')
 
 
                 with colProfit:

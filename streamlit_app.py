@@ -5,6 +5,7 @@ import pymarket as pm
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 from collections import OrderedDict
 import pprint
 
@@ -16,6 +17,8 @@ wheelings = [
     [0, 0, 0,    0,     0,    0],
     [0, 0, 0,    0,     0,    0],
 ]
+
+p2p_mech_net_profit = 0
 
 def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict):
     """Computes all the trades using a P2P random trading
@@ -79,6 +82,9 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
     3    2         0    0.0       1    True
 
     """
+    global p2p_mech_net_profit
+    p2p_mech_net_profit = 0
+
     r = np.random.RandomState() if r is None else r
     trans = pm.TransactionManager()
     buying = bids[bids.buying]
@@ -126,6 +132,9 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
 
             if q > 0 and buyer_price >= prices[s]:
                 p = buyer_price * p_coef + (1 - p_coef) * prices[s]
+
+                p2p_mech_net_profit += ((buyer_price - p) * q) + ((p - prices[s]) * q)
+
                 trans_b = (b, q, p, s, (quantities[b] - q) > 0)
                 trans_s = (s, q, p, b, (quantities[s] - q) > 0)
                 quantities[b] -= q
@@ -246,73 +255,76 @@ def plot_network_diagram(
 
     return ax
 
-# Initialize session state variables for 6 players
-# Player 1
-q_rand = random.randint(10,20)
-p_rand = random.uniform(3.65,3.75)
-if 'slider_q1' not in st.session_state:
-    st.session_state['slider_q1'] = q_rand
-if 'num_q1' not in st.session_state:
-    st.session_state['num_q1'] = q_rand
-if 'slider_p1' not in st.session_state:
-    st.session_state['slider_p1'] = p_rand + 0.87
-if 'num_p1' not in st.session_state:
-    st.session_state['num_p1'] = p_rand + 0.87
-# Player 2
-q_rand = random.randint(15,20)
-p_rand = random.uniform(3.70,3.80)
-if 'slider_q2' not in st.session_state:
-    st.session_state['slider_q2'] = q_rand
-if 'num_q2' not in st.session_state:
-    st.session_state['num_q2'] = q_rand
-if 'slider_p2' not in st.session_state:
-    st.session_state['slider_p2'] = p_rand + 0.87
-if 'num_p2' not in st.session_state:
-    st.session_state['num_p2'] = p_rand + 0.87
-#Player 3
-q_rand = random.randint(20,30)
-p_rand = random.uniform(3.75,3.85)
-if 'slider_q3' not in st.session_state:
-    st.session_state['slider_q3'] = q_rand
-if 'num_q3' not in st.session_state:
-    st.session_state['num_q3'] = q_rand
-if 'slider_p3' not in st.session_state:
-    st.session_state['slider_p3'] = p_rand + 0.87
-if 'num_p3' not in st.session_state:
-    st.session_state['num_p3'] = p_rand + 0.87
-#Player 4
-q_rand = random.randint(5,10)
-p_rand = random.uniform(3.65,3.75)
-if 'slider_q4' not in st.session_state:
-    st.session_state['slider_q4'] = q_rand
-if 'num_q4' not in st.session_state:
-    st.session_state['num_q4'] = q_rand
-if 'slider_p4' not in st.session_state:
-    st.session_state['slider_p4'] = p_rand
-if 'num_p4' not in st.session_state:
-    st.session_state['num_p4'] = p_rand
-#Player 5
-q_rand = random.randint(10,20)
-p_rand = random.uniform(3.70,3.80)
-if 'slider_q5' not in st.session_state:
-    st.session_state['slider_q5'] = q_rand
-if 'num_q5' not in st.session_state:
-    st.session_state['num_q5'] = q_rand
-if 'slider_p5' not in st.session_state:
-    st.session_state['slider_p5'] = p_rand
-if 'num_p5' not in st.session_state:
-    st.session_state['num_p5'] = p_rand
-#Player 6
-q_rand = random.randint(15,25)
-p_rand = random.uniform(3.75,3.85)
-if 'slider_q6' not in st.session_state:
-    st.session_state['slider_q6'] = q_rand
-if 'num_q6' not in st.session_state:
-    st.session_state['num_q6'] = q_rand
-if 'slider_p6' not in st.session_state:
-    st.session_state['slider_p6'] = p_rand
-if 'num_p6' not in st.session_state:
-    st.session_state['num_p6'] = p_rand
+is_running = 'running' in st.session_state and st.session_state['running'] == True
+
+if not is_running and 'run' not in st.session_state:
+    # Initialize session state variables for 6 players
+    # Player 1
+    q_rand = random.randint(10,20)
+    p_rand = random.uniform(3.65,3.75)
+    if 'slider_q1' not in st.session_state:
+        st.session_state['slider_q1'] = q_rand
+    if 'num_q1' not in st.session_state:
+        st.session_state['num_q1'] = q_rand
+    if 'slider_p1' not in st.session_state:
+        st.session_state['slider_p1'] = p_rand + 0.87
+    if 'num_p1' not in st.session_state:
+        st.session_state['num_p1'] = p_rand + 0.87
+    # Player 2
+    q_rand = random.randint(15,20)
+    p_rand = random.uniform(3.70,3.80)
+    if 'slider_q2' not in st.session_state:
+        st.session_state['slider_q2'] = q_rand
+    if 'num_q2' not in st.session_state:
+        st.session_state['num_q2'] = q_rand
+    if 'slider_p2' not in st.session_state:
+        st.session_state['slider_p2'] = p_rand + 0.87
+    if 'num_p2' not in st.session_state:
+        st.session_state['num_p2'] = p_rand + 0.87
+    #Player 3
+    q_rand = random.randint(20,30)
+    p_rand = random.uniform(3.75,3.85)
+    if 'slider_q3' not in st.session_state:
+        st.session_state['slider_q3'] = q_rand
+    if 'num_q3' not in st.session_state:
+        st.session_state['num_q3'] = q_rand
+    if 'slider_p3' not in st.session_state:
+        st.session_state['slider_p3'] = p_rand + 0.87
+    if 'num_p3' not in st.session_state:
+        st.session_state['num_p3'] = p_rand + 0.87
+    #Player 4
+    q_rand = random.randint(5,10)
+    p_rand = random.uniform(3.65,3.75)
+    if 'slider_q4' not in st.session_state:
+        st.session_state['slider_q4'] = q_rand
+    if 'num_q4' not in st.session_state:
+        st.session_state['num_q4'] = q_rand
+    if 'slider_p4' not in st.session_state:
+        st.session_state['slider_p4'] = p_rand
+    if 'num_p4' not in st.session_state:
+        st.session_state['num_p4'] = p_rand
+    #Player 5
+    q_rand = random.randint(10,20)
+    p_rand = random.uniform(3.70,3.80)
+    if 'slider_q5' not in st.session_state:
+        st.session_state['slider_q5'] = q_rand
+    if 'num_q5' not in st.session_state:
+        st.session_state['num_q5'] = q_rand
+    if 'slider_p5' not in st.session_state:
+        st.session_state['slider_p5'] = p_rand
+    if 'num_p5' not in st.session_state:
+        st.session_state['num_p5'] = p_rand
+    #Player 6
+    q_rand = random.randint(15,25)
+    p_rand = random.uniform(3.75,3.85)
+    if 'slider_q6' not in st.session_state:
+        st.session_state['slider_q6'] = q_rand
+    if 'num_q6' not in st.session_state:
+        st.session_state['num_q6'] = q_rand
+    if 'slider_p6' not in st.session_state:
+        st.session_state['slider_p6'] = p_rand
+    if 'num_p6' not in st.session_state:
+        st.session_state['num_p6'] = p_rand
 
 # Set Option for Streamlit
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -367,171 +379,215 @@ df = pd.DataFrame(data={
 })
 st.dataframe(df.set_index(df.columns[0]))
 
-with st.expander("Input:", True):
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    with col1:
-        st.markdown(":one: **Player 1 :red[- Buyer: ]**")
-        mode1 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode1', index=1)
-        st.markdown('**:red[Quantity from actual]**')
-        slide_q1 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q1', step=1, on_change=update_numin)
-        num_q1 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q1', step=1, on_change=update_slider)
-        if mode1 == 'Advanced':
-            st.markdown('**:red[Price included wheeling charge*]**')
-            slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p1', step=0.01, on_change=update_numin)
-            num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p1', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-        else:
-            st.markdown('**:red[Price included wheeling charge*]**')
-            st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-            slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p1', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p1', step=0.01, on_change=update_slider1, disabled=True)
-            num_p1 = 4.62
-        q1 = num_q1
-        p1 = num_p1
-        st.markdown("---")
-        st.markdown("Bid Details for Player 1:")
-        st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q1) + "] " + "kWh")
-        st.markdown("Price* = " + ":red[" + "{:.2f}".format(p1) + "] " + "฿/kWh")
-        #st.caption(f':red_circle: Price for matching will be {p1-0.87:.2f} ฿/kWh')
-        st.caption('*Included wheeling charge')
-    with col2:
-        st.markdown(":two: **Player 2 :red[- Buyer: ]**")
-        mode2 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode2', index=1)
-        st.markdown('**:red[Quantity from actual]**')
-        slide_q2 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q2', step=1, on_change=update_numin)
-        num_q2 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q2', step=1, on_change=update_slider)
-        if mode2 == 'Advanced':
-            st.markdown('**:red[Price included wheeling charge*]**')
-            slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p2', step=0.01, on_change=update_numin)
-            num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p2', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-        else:
-            st.markdown('**:red[Price included wheeling charge*]**')
-            st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-            slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p2', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p2', step=0.01, on_change=update_slider1, disabled=True)
-            num_p2 = 4.62   
-        q2 = num_q2
-        p2 = num_p2
-        st.markdown("---")
-        st.markdown("Bid Details for Player 2:")
-        st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q2) + "] " + "kWh")
-        st.markdown("Price* = " + ":red[" + "{:.2f}".format(p2) + "] " + "฿/kWh")
-        #st.caption(f':red_circle: Price for matching will be {p2-0.87:.2f} ฿/kWh')
-        st.caption('*Included wheeling charge')
-    with col3:
-        st.markdown(":three: **Player 3 :red[- Buyer: ]**")
-        mode3 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode3', index=1)
-        st.markdown('**:red[Quantity from actual]**')
-        slide_q3 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q3', step=1, on_change=update_numin)
-        num_q3 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q3', step=1, on_change=update_slider)
-        if mode3 == 'Advanced':
-            st.markdown('**:red[Price included wheeling charge*]**')
-            slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p3', step=0.01, on_change=update_numin)
-            num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p3', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-        else:
-            st.markdown('**:red[Price included wheeling charge*]**')
-            st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
-            slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p3', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p3', step=0.01, on_change=update_slider1, disabled=True)
-            num_p3 = 4.62
-        q3 = num_q3
-        p3 = num_p3
-        st.markdown("---")
-        st.markdown("Bid Details for Player 3:")
-        st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q3) + "] " + "kWh")
-        st.markdown("Price* = " + ":red[" + "{:.2f}".format(p3) + "] " + "฿/kWh")
-        #st.caption(f':red_circle: Price for matching will be {p3-0.87:.2f} ฿/kWh')
-        st.caption('*Included wheeling charge')
-    with col4:
-        st.markdown(":four: **Player 4 :blue[- Seller: ]**")
-        mode4 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode4', index=1)
-        st.markdown('**:blue[Quantity from actual]**')
-        slide_q4 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q4', step=1, on_change=update_numin)
-        num_q4 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q4', step=1, on_change=update_slider)
-        if mode4 == 'Advanced':
-            st.markdown('**:blue[Price]**')
-            slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p4', step=0.01, on_change=update_numin)
-            num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p4', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-        else:
-            st.markdown('**:blue[Price]**')
-            st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-            slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p4', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p4', step=0.01, on_change=update_slider1, disabled=True)
-            num_p4 = 3.75
-        q4 = num_q4
-        p4 = num_p4
-        st.markdown("---")
-        st.markdown("Offer Details for Player 4:")
-        st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q4) + "] " + "kWh")
-        st.markdown("Price = " + ":blue[" + "{:.2f}".format(p4) + "] " + "฿/kWh")
-        st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
-    with col5:
-        st.markdown(":five: **Player 5 :blue[- Seller: ]**")
-        mode5 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode5', index=1)
-        st.markdown('**:blue[Quantity from actual]**')
-        slide_q5 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q5', step=1, on_change=update_numin)
-        num_q5 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q5', step=1, on_change=update_slider)
-        if mode5 == 'Advanced':
-            st.markdown('**:blue[Price]**')
-            slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p5', step=0.01, on_change=update_numin)
-            num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p5', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-        else:
-            st.markdown('**:blue[Price]**')
-            st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-            slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p5', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p5', step=0.01, on_change=update_slider1, disabled=True)
-            num_p5 = 3.75
-        q5 = num_q5
-        p5 = num_p5
-        st.markdown("---")
-        st.markdown("Offer Details for Player 5:")
-        st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q5) + "] " + "kWh")
-        st.markdown("Price = " + ":blue[" + "{:.2f}".format(p5) + "] " + "฿/kWh")
-        st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
-    with col6:
-        st.markdown(":six: **Player 6 :blue[- Seller: ]**")
-        mode6 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode6', index=1)
-        st.markdown('**:blue[Quantity from actual]**')
-        slide_q6 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q6', step=1, on_change=update_numin)
-        num_q6 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q6', step=1, on_change=update_slider)
-        if mode6 == 'Advanced':
-            st.markdown('**:blue[Price]**')
-            slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p6', step=0.01, on_change=update_numin)
-            num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p6', step=0.01, on_change=update_slider)
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-        else:
-            st.markdown('**:blue[Price]**')
-            st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
-            st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
-            slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p6', step=0.01, on_change=update_numin1, disabled=True) 
-            num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p6', step=0.01, on_change=update_slider1, disabled=True)
-            num_p6 = 3.75
-        q6 = num_q6
-        p6 = num_p6
-        st.markdown("---")
-        st.markdown("Offer Details for Player 6:")
-        st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q6) + "] " + "kWh")
-        st.markdown("Price = " + ":blue[" + "{:.2f}".format(p6) + "] " + "฿/kWh")
-        st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
+
+colRunning, colButton1, colButton2 = st.columns([7,2,1])
+
+with colButton1:
+    timer_value = st.time_input('Run for at least (seconds)', datetime.time(0, 5), step=5*60, disabled=is_running)
+    if timer_value.hour == 0 and timer_value.minute == 0:
+        st.caption("00:00 means it will execute only 1 time")
+
+def save_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if var in globals():
+            st.session_state[var] = globals()[var]
+
+def restore_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        globals()[var] = st.session_state[var]
+
+def has_all_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if var not in st.session_state:
+            return False
+
+    return True
+
+def delete_all_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if var in st.session_state:
+            del st.session_state[var]          
+
+needSave = False
+with colButton2:
+    if st.button(":bar_chart: Run P2P Market Clearing", disabled=is_running):
+        needSave = True
+
+
+input_container = st.container();
+with input_container:
+    expanded = not is_running and 'run' not in st.session_state
+    with st.expander("Input:", expanded=expanded):
+        buyer_tab, seller_tab = st.tabs(['Buyer', 'Seller'])
+        with buyer_tab:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(":one: **Player 1 :red[- Buyer: ]**")
+                mode1 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode1', index=1)
+                st.markdown('**:red[Quantity from actual]**')
+                slide_q1 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q1', step=1, on_change=update_numin)
+                num_q1 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q1', step=1, on_change=update_slider)
+                if mode1 == 'Advanced':
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p1', step=0.01, on_change=update_numin)
+                    num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p1', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                else:
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                    slider_p1 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p1', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p1 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p1', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p1 = 4.62
+                q1 = num_q1
+                p1 = num_p1
+                st.markdown("---")
+                st.markdown("Bid Details for Player 1:")
+                st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q1) + "] " + "kWh")
+                st.markdown("Price* = " + ":red[" + "{:.2f}".format(p1) + "] " + "฿/kWh")
+                #st.caption(f':red_circle: Price for matching will be {p1-0.87:.2f} ฿/kWh')
+                st.caption('*Included wheeling charge')
+            with col2:
+                st.markdown(":two: **Player 2 :red[- Buyer: ]**")
+                mode2 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode2', index=1)
+                st.markdown('**:red[Quantity from actual]**')
+                slide_q2 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q2', step=1, on_change=update_numin)
+                num_q2 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q2', step=1, on_change=update_slider)
+                if mode2 == 'Advanced':
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p2', step=0.01, on_change=update_numin)
+                    num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p2', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                else:
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                    slider_p2 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p2', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p2 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p2', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p2 = 4.62   
+                q2 = num_q2
+                p2 = num_p2
+                st.markdown("---")
+                st.markdown("Bid Details for Player 2:")
+                st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q2) + "] " + "kWh")
+                st.markdown("Price* = " + ":red[" + "{:.2f}".format(p2) + "] " + "฿/kWh")
+                #st.caption(f':red_circle: Price for matching will be {p2-0.87:.2f} ฿/kWh')
+                st.caption('*Included wheeling charge')
+            with col3:
+                st.markdown(":three: **Player 3 :red[- Buyer: ]**")
+                mode3 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode3', index=1)
+                st.markdown('**:red[Quantity from actual]**')
+                slide_q3 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q3', step=1, on_change=update_numin)
+                num_q3 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q3', step=1, on_change=update_slider)
+                if mode3 == 'Advanced':
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 4.62, key='slider_p3', step=0.01, on_change=update_numin)
+                    num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 4.62, key='num_p3', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                else:
+                    st.markdown('**:red[Price included wheeling charge*]**')
+                    st.markdown(':orange[Using Price Bid = 4.62 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 4.62 ฿/kWh")
+                    slider_p3 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p3', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p3 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p3', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p3 = 4.62
+                q3 = num_q3
+                p3 = num_p3
+                st.markdown("---")
+                st.markdown("Bid Details for Player 3:")
+                st.markdown("Quantity = " + ":red[" + "{:.2f}".format(q3) + "] " + "kWh")
+                st.markdown("Price* = " + ":red[" + "{:.2f}".format(p3) + "] " + "฿/kWh")
+                #st.caption(f':red_circle: Price for matching will be {p3-0.87:.2f} ฿/kWh')
+                st.caption('*Included wheeling charge')
+
+        with seller_tab:
+            col4, col5, col6 = st.columns(3)
+            with col4:
+                st.markdown(":four: **Player 4 :blue[- Seller: ]**")
+                mode4 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode4', index=1)
+                st.markdown('**:blue[Quantity from actual]**')
+                slide_q4 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q4', step=1, on_change=update_numin)
+                num_q4 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q4', step=1, on_change=update_slider)
+                if mode4 == 'Advanced':
+                    st.markdown('**:blue[Price]**')
+                    slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p4', step=0.01, on_change=update_numin)
+                    num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p4', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                else:
+                    st.markdown('**:blue[Price]**')
+                    st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                    slider_p4 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p4', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p4 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p4', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p4 = 3.75
+                q4 = num_q4
+                p4 = num_p4
+                st.markdown("---")
+                st.markdown("Offer Details for Player 4:")
+                st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q4) + "] " + "kWh")
+                st.markdown("Price = " + ":blue[" + "{:.2f}".format(p4) + "] " + "฿/kWh")
+                st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
+            with col5:
+                st.markdown(":five: **Player 5 :blue[- Seller: ]**")
+                mode5 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode5', index=1)
+                st.markdown('**:blue[Quantity from actual]**')
+                slide_q5 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q5', step=1, on_change=update_numin)
+                num_q5 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q5', step=1, on_change=update_slider)
+                if mode5 == 'Advanced':
+                    st.markdown('**:blue[Price]**')
+                    slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p5', step=0.01, on_change=update_numin)
+                    num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p5', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                else:
+                    st.markdown('**:blue[Price]**')
+                    st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                    slider_p5 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p5', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p5 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p5', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p5 = 3.75
+                q5 = num_q5
+                p5 = num_p5
+                st.markdown("---")
+                st.markdown("Offer Details for Player 5:")
+                st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q5) + "] " + "kWh")
+                st.markdown("Price = " + ":blue[" + "{:.2f}".format(p5) + "] " + "฿/kWh")
+                st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
+            with col6:
+                st.markdown(":six: **Player 6 :blue[- Seller: ]**")
+                mode6 = st.radio("Select Operation Mode", ["Automatic", "Advanced"],horizontal=True,key='mode6', index=1)
+                st.markdown('**:blue[Quantity from actual]**')
+                slide_q6 = st.slider('Select Quantity Bid (kWh):', 0, 30, key='slider_q6', step=1, on_change=update_numin)
+                num_q6 = st.number_input('Enter Quantity Bid (kWh):',0, 30, key='num_q6', step=1, on_change=update_slider)
+                if mode6 == 'Advanced':
+                    st.markdown('**:blue[Price]**')
+                    slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, 3.75, key='slider_p6', step=0.01, on_change=update_numin)
+                    num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, 3.75, key='num_p6', step=0.01, on_change=update_slider)
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                else:
+                    st.markdown('**:blue[Price]**')
+                    st.markdown(':orange[Using Price Bid = 3.75 ฿/kWh]')
+                    st.caption("Hr-1 trade period price is 3.75 ฿/kWh")
+                    slider_p6 = st.slider('Select Price Bid* (฿/kWh):', 0.0, 10.0, value = 4.62, key='slider_p6', step=0.01, on_change=update_numin1, disabled=True) 
+                    num_p6 = st.number_input('Enter Price Bid* (฿/kWh):',0.0, 10.0, value = 4.62, key='num_p6', step=0.01, on_change=update_slider1, disabled=True)
+                    num_p6 = 3.75
+                q6 = num_q6
+                p6 = num_p6
+                st.markdown("---")
+                st.markdown("Offer Details for Player 6:")
+                st.markdown("Quantity = " + ":blue[" + "{:.2f}".format(q6) + "] " + "kWh")
+                st.markdown("Price = " + ":blue[" + "{:.2f}".format(p6) + "] " + "฿/kWh")
+                st.caption(f':large_blue_circle: Price for matching will be {p4:.2f} ฿/kWh')
         
 but1,but2,but3 = st.columns(3)
 
-if st.button(":bar_chart: Run P2P Market Clearing"):
-    def save_vars(to_save_vars: list[str]):
-        for var in to_save_vars:
-            st.session_state[var] = globals()[var]
-
+if needSave:
+    st.session_state['run'] = False
+    st.session_state['running'] = True
+    st.session_state['running_start'] = datetime.datetime.now()
+    st.session_state['running_end'] = datetime.datetime.now() + datetime.timedelta(minutes=timer_value.hour,seconds=timer_value.minute)
+    is_running = True
     save_vars([
-        'p1', 'q1', 'p2', 'q1', 'p3', 'q3', 
+        'p1', 'q1', 'p2', 'q2', 'p3', 'q3', 
         'p4', 'q4', 'p5', 'q5', 'p6', 'q6'
     ])
 
@@ -543,26 +599,116 @@ if st.button(":bar_chart: Run P2P Market Clearing"):
     avg_offer = sum([p4,p5,p6])/3
     save_vars(['sum_q_offer', 'avg_offer'])
 
-    mar = pm.Market()
-    mar.accept_bid(q1, round(p1,2), 0, True, 0, True)
-    mar.accept_bid(q2, round(p2,2), 1, True, 0, True)
-    mar.accept_bid(q3, round(p3,2), 2, True, 0, True)
-    mar.accept_bid(q4, round(p4,2), 3, False, 0, True)
-    mar.accept_bid(q5, round(p5,2), 4, False, 0, True)
-    mar.accept_bid(q6, round(p6,2), 5, False, 0, True)
-    bids = mar.bm.get_df()
-    transactions, extras = mar.run('p2p-egat') # run the p2p mechanism
+    delete_all_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit'])
 
-    save_vars(['mar', 'bids', 'transactions', 'extras'])
+    if not (timer_value.hour == 0 and timer_value.minute == 0 and timer_value.second == 0): 
+        input_container.empty()     
+        st.rerun()
+        
 
-    st.session_state['run'] = True
+current_max_net_profit = p2p_mech_net_profit
+
+with colRunning:
+    run_counter = 0
+    if not is_running:
+        with st.empty():
+            colProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,4])
+            with colTimer:
+                if has_all_vars(['running_start', 'running_end']):
+                    current_time: datetime.datetime = st.session_state['running_start']
+                    target_time: datetime.datetime = st.session_state['running_end']
+                    time_delta = target_time - current_time
+
+                    hours = int(time_delta.total_seconds() / (60*60))
+                    minutes = int(time_delta.total_seconds() / (60))
+                    seconds = int(time_delta.total_seconds())
+
+                    st.metric("Target Run Time", f'{hours:02d}:{minutes:02d}:{seconds:02d}')
+
+            with colProfit:
+                if 'run' in st.session_state:
+                    restore_vars(['current_max_net_profit'])
+                    st.metric("Best Total Profit", f'{current_max_net_profit:.2f} ฿')
+
+            with colTotalCount:
+                if has_all_vars(['run_counter']):
+                    restore_vars([
+                        'run_counter'
+                    ])
+
+                    st.metric("Total Run", f'{run_counter}')
 
 
-if 'run' in st.session_state:
-    def restore_vars(to_save_vars: list[str]):
-        for var in to_save_vars:
-            globals()[var] = st.session_state[var]
+    if is_running:
+        with st.empty():
+            while is_running:
+                colProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,4])
 
+                restore_vars([
+                    'p1', 'q1', 'p2', 'q2', 'p3', 'q3', 
+                    'p4', 'q4', 'p5', 'q5', 'p6', 'q6'
+                ])
+
+                with colTimer:
+                    mar = pm.Market()
+                    mar.accept_bid(q1, round(p1,2), 0, True, 0, True)
+                    mar.accept_bid(q2, round(p2,2), 1, True, 0, True)
+                    mar.accept_bid(q3, round(p3,2), 2, True, 0, True)
+                    mar.accept_bid(q4, round(p4,2), 3, False, 0, True)
+                    mar.accept_bid(q5, round(p5,2), 4, False, 0, True)
+                    mar.accept_bid(q6, round(p6,2), 5, False, 0, True)
+                    bids = mar.bm.get_df()
+                    transactions, extras = mar.run('p2p-egat') # run the p2p mechanism
+
+                    if run_counter == 0:
+                        current_max_net_profit = p2p_mech_net_profit
+                        save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit'])
+                    else:
+                        if current_max_net_profit < p2p_mech_net_profit:
+                            current_max_net_profit = p2p_mech_net_profit
+                            save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit'])
+                        else:
+                            if has_all_vars(['mar', 'bids', 'transactions', 'extras']):
+                                restore_vars(['mar', 'bids', 'transactions', 'extras'])
+
+                    current_time: datetime.datetime = datetime.datetime.now()
+                    target_time: datetime.datetime = st.session_state['running_end']
+                    time_delta = target_time - current_time
+
+                    hours = int(time_delta.total_seconds() / (60*60))
+                    minutes = int(time_delta.total_seconds() / (60))
+                    seconds = int(time_delta.total_seconds())
+
+
+                    if time_delta.total_seconds() <= 0:
+                        st.session_state['run'] = True
+                        st.session_state['running'] = False
+
+                        is_running = False
+
+                        # if run_counter > 0:
+                        st.rerun()
+
+                        break
+                    else:
+                        st.metric("Running", f'{hours:02d}:{minutes:02d}:{seconds:02d}')
+
+
+                with colProfit:
+                    if not is_running:
+                        st.metric("Total Profit", f'{current_max_net_profit:.2f} ฿')
+                    else:
+                        st.metric("Current Best Total Profit", f'{current_max_net_profit:.2f} ฿')
+
+                with colTotalCount:
+                    st.metric("Total Run", f'{run_counter}')
+
+                run_counter += 1
+                save_vars(['run_counter'])
+
+
+
+if 'run' in st.session_state and not is_running:
     restore_vars([
         'p1', 'q1', 'p2', 'q1', 'p3', 'q3', 
         'p4', 'q4', 'p5', 'q5', 'p6', 'q6'

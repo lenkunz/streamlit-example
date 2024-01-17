@@ -628,7 +628,7 @@ with colRunning:
             with colProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_max_net_profit'])
-                    st.metric("Best Total Profit", f'{current_max_net_profit:.2f} ฿')
+                    st.metric("Highest\nTotal Profits Optimization", f'{current_max_net_profit:.2f} ฿')
 
             with colTotalCount:
                 if has_all_vars(['run_counter']):
@@ -696,9 +696,9 @@ with colRunning:
 
                 with colProfit:
                     if not is_running:
-                        st.metric("Total Profit", f'{current_max_net_profit:.2f} ฿')
+                        st.metric("Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
                     else:
-                        st.metric("Current Best Total Profit", f'{current_max_net_profit:.2f} ฿')
+                        st.metric("Current Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
 
                 with colTotalCount:
                     st.metric("Total Run", f'{run_counter}')

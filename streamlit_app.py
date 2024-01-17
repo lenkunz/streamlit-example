@@ -117,6 +117,7 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
     general_trading_list = []
 
     profit_sums = np.zeros(Nb + Ns)
+    profit_div = np.ones(Nb + Ns)
 
     # Loop while there is quantities to trade or not all
     # possibilities have been tried
@@ -135,7 +136,6 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
         general_trading_list.append(trading_list)
         for (b, s) in trading_list:
             buyer_price = prices[b] - wheelings[b][s];
-            print(f'Buyer {b} Seller {s} Wheeling {wheelings[b][s]} Price {buyer_price}')
             q = min(quantities[b], quantities[s])
 
             if q > 0 and buyer_price >= prices[s]:
@@ -144,6 +144,9 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
                 # p2p_mech_net_profit += ((buyer_price - p) * q) + ((p - prices[s]) * q)
                 profit_sums[b] += (buyer_price - p) * q
                 profit_sums[s] += (p - prices[s]) * q
+
+                profit_div[b] += 1
+                profit_div[s] += 1
 
                 trans_b = (b, q, p, s, (quantities[b] - q) > 0)
                 trans_s = (s, q, p, b, (quantities[s] - q) > 0)
@@ -162,7 +165,7 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
         for inactive in inactive_buying + inactive_selling:
             tmp_active &= pairs[inactive, :]
 
-    p2p_mech_avg_profit = np.average(profit_sums)
+    p2p_mech_avg_profit = np.sum(np.divide(profit_sums, profit_div))
     p2p_mech_net_profit = np.sum(profit_sums)
 
     extra = {'trading_list': general_trading_list}

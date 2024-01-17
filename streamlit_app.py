@@ -19,6 +19,7 @@ wheelings = [
 ]
 
 p2p_mech_net_profit = 0
+p2p_mech_avg_profit = 0
 
 def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict):
     """Computes all the trades using a P2P random trading
@@ -83,7 +84,10 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
 
     """
     global p2p_mech_net_profit
+    global p2p_mech_avg_profit
+
     p2p_mech_net_profit = 0
+    p2p_mech_avg_profit = 0
 
     r = np.random.RandomState() if r is None else r
     trans = pm.TransactionManager()
@@ -111,8 +115,12 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
     active = np.ones(Nb * Ns, dtype=bool)
     tmp_active = active.copy()
     general_trading_list = []
+
+    profit_sums = np.zeros(Nb + Ns)
+
     # Loop while there is quantities to trade or not all
     # possibilities have been tried
+
     while quantities.sum() > 0 and tmp_active.sum() > 0:
         trading_list = []
         while tmp_active.sum() > 0:  # We can select a pair
@@ -133,7 +141,9 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
             if q > 0 and buyer_price >= prices[s]:
                 p = buyer_price * p_coef + (1 - p_coef) * prices[s]
 
-                p2p_mech_net_profit += ((buyer_price - p) * q) + ((p - prices[s]) * q)
+                # p2p_mech_net_profit += ((buyer_price - p) * q) + ((p - prices[s]) * q)
+                profit_sums[b] += (buyer_price - p) * q
+                profit_sums[s] += (p - prices[s]) * q
 
                 trans_b = (b, q, p, s, (quantities[b] - q) > 0)
                 trans_s = (s, q, p, b, (quantities[s] - q) > 0)
@@ -151,6 +161,9 @@ def p2p_egat_mechanism(bids, p_coef=0.5, r=None) -> (pm.TransactionManager, dict
         tmp_active = active.copy()
         for inactive in inactive_buying + inactive_selling:
             tmp_active &= pairs[inactive, :]
+
+    p2p_mech_avg_profit = np.average(profit_sums)
+    p2p_mech_net_profit = np.sum(profit_sums)
 
     extra = {'trading_list': general_trading_list}
     return trans, extra
@@ -606,13 +619,14 @@ if needSave:
         st.rerun()
         
 
-current_max_net_profit = p2p_mech_net_profit
+current_max_net_profit = 0
+current_max_avg_profit = 0
 
 with colRunning:
     run_counter = 0
     if not is_running:
         with st.empty():
-            colProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,4])
+            colNetProfit, colAvgProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,2,2])
             with colTimer:
                 if has_all_vars(['running_start', 'running_actual_end']):
                     current_time: datetime.datetime = st.session_state['running_start']
@@ -625,10 +639,15 @@ with colRunning:
 
                     st.metric("Run Time", f'{minutes:02d}:{seconds:02d}.{milliseconds:03d}')
 
-            with colProfit:
+            with colNetProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_max_net_profit'])
                     st.metric("Highest\nTotal Profits Optimization", f'{current_max_net_profit:.2f} ฿')
+
+            with colAvgProfit:
+                if 'run' in st.session_state:
+                    restore_vars(['current_max_avg_profit'])
+                    st.metric("Highest\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
 
             with colTotalCount:
                 if has_all_vars(['run_counter']):
@@ -642,7 +661,7 @@ with colRunning:
     if is_running:
         with st.empty():
             while is_running:
-                colProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,4])
+                colNetProfit, colAvgProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,2,2])
 
                 restore_vars([
                     'p1', 'q1', 'p2', 'q2', 'p3', 'q3', 
@@ -662,11 +681,16 @@ with colRunning:
 
                     if run_counter == 0:
                         current_max_net_profit = p2p_mech_net_profit
-                        save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit'])
+                        current_max_avg_profit = p2p_mech_avg_profit
+                        save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit', 'current_max_avg_profit'])
                     else:
-                        if current_max_net_profit < p2p_mech_net_profit:
+                        if ((current_max_net_profit < p2p_mech_net_profit) 
+                            or (current_max_net_profit == p2p_mech_net_profit 
+                                and current_max_avg_profit > p2p_mech_avg_profit)
+                        ):
                             current_max_net_profit = p2p_mech_net_profit
-                            save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit'])
+                            current_max_avg_profit = p2p_mech_avg_profit
+                            save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit', 'current_max_avg_profit'])
                         else:
                             if has_all_vars(['mar', 'bids', 'transactions', 'extras']):
                                 restore_vars(['mar', 'bids', 'transactions', 'extras'])
@@ -694,11 +718,17 @@ with colRunning:
                         st.metric("Running", f'{minutes:02d}:{seconds:02d}')
 
 
-                with colProfit:
+                with colNetProfit:
                     if not is_running:
                         st.metric("Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
                     else:
                         st.metric("Current Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
+
+                with colAvgProfit:
+                    if not is_running:
+                        st.metric("Highest\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
+                    else:
+                        st.metric("Current\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
 
                 with colTotalCount:
                     st.metric("Total Run", f'{run_counter}')

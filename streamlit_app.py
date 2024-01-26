@@ -9,14 +9,64 @@ import datetime
 from collections import OrderedDict
 import pprint
 
-wheelings = [
-    [0, 0, 0,  0.87,  0.7,  1.2],
-    [0, 0, 0,  0.7,   1.2, 0.87],
-    [0, 0, 0,  0.7,  0.87,  1.2],
-    [0, 0, 0,    0,     0,    0],
-    [0, 0, 0,    0,     0,    0],
-    [0, 0, 0,    0,     0,    0],
-]
+
+def save_vars(to_save_vars: list[str | tuple[str,str]]):
+    for var in to_save_vars:
+        if type(var) is tuple:
+            state_var = var[0]
+            global_var = var[1]
+        else:
+            state_var = var
+            global_var = var
+
+        if global_var in globals():
+            st.session_state[state_var] = globals()[global_var]
+
+def restore_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if type(var) is tuple:
+            state_var = var[0]
+            global_var = var[1]
+        else:
+            state_var = var
+            global_var = var
+            
+        globals()[global_var] = st.session_state[state_var]
+
+def has_all_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if var not in st.session_state:
+            return False
+
+    return True
+
+def delete_all_vars(to_save_vars: list[str]):
+    for var in to_save_vars:
+        if var in st.session_state:
+            del st.session_state[var]          
+
+if not has_all_vars(['wheelings']):
+    wheelings = [
+        [0, 0, 0,  0.87,  0.7,  1.2],
+        [0, 0, 0,  0.7,   1.2, 0.87],
+        [0, 0, 0,  0.7,  0.87,  1.2],
+        [0, 0, 0,    0,     0,    0],
+        [0, 0, 0,    0,     0,    0],
+        [0, 0, 0,    0,     0,    0],
+    ]
+    save_vars(['wheelings'])
+
+def update_wheelings(new_value: list[list[float]]):
+    globals()['wheelings'] = [
+        [0, 0, 0] + new_value[0],
+        [0, 0, 0] + new_value[1],
+        [0, 0, 0] + new_value[2],
+    ] + [
+        [0, 0, 0,    0,     0,    0],
+        [0, 0, 0,    0,     0,    0],
+        [0, 0, 0,    0,     0,    0],
+    ]
+    save_vars(['wheelings'])
 
 p2p_mech_net_profit = 0
 p2p_mech_avg_profit = 0
@@ -387,14 +437,25 @@ recommended_price = 3.75
 st.header(":zap: Bids/Offers")
 
 st.markdown("**Simulated Wheeling Charges**")
-df = pd.DataFrame(data={
-    '': ['Player 4', 'Player 5', 'Player 6'],
-    'Player 1': wheelings[0][3:],
-    'Player 2': wheelings[1][3:],
-    'Player 3': wheelings[2][3:],
-})
-st.dataframe(df.set_index(df.columns[0]))
 
+if has_all_vars(['wheelings']):
+    wheeling_df = pd.DataFrame(data={
+        '': ['Player 4', 'Player 5', 'Player 6'],
+        'Player 1': [0.87, 0.7,  0.7],
+        'Player 2': [0.7,  1.2,  0.87],
+        'Player 3': [1.2,  0.87, 1.2],
+    })
+
+new_wheelings_df = st.data_editor(wheeling_df.set_index(wheeling_df.columns[0]))
+
+new_wheelings_df = new_wheelings_df.transpose()
+new_wheelings_value = [
+    new_wheelings_df['Player 4'].to_list(),
+    new_wheelings_df['Player 5'].to_list(),
+    new_wheelings_df['Player 6'].to_list(),
+]
+
+update_wheelings(new_wheelings_value)
 
 colRunning, colButton1, colButton2 = st.columns([7,2,1])
 
@@ -402,27 +463,6 @@ with colButton1:
     timer_value = st.time_input('Run for at least (seconds)', datetime.time(0, 5), step=5*60, disabled=is_running)
     if timer_value.hour == 0 and timer_value.minute == 0:
         st.caption("00:00 means it will execute only 1 time")
-
-def save_vars(to_save_vars: list[str]):
-    for var in to_save_vars:
-        if var in globals():
-            st.session_state[var] = globals()[var]
-
-def restore_vars(to_save_vars: list[str]):
-    for var in to_save_vars:
-        globals()[var] = st.session_state[var]
-
-def has_all_vars(to_save_vars: list[str]):
-    for var in to_save_vars:
-        if var not in st.session_state:
-            return False
-
-    return True
-
-def delete_all_vars(to_save_vars: list[str]):
-    for var in to_save_vars:
-        if var in st.session_state:
-            del st.session_state[var]          
 
 needSave = False
 with colButton2:
@@ -624,12 +664,14 @@ if needSave:
 
 current_max_net_profit = 0
 current_max_avg_profit = 0
+current_min_net_profit = 0
+current_min_avg_profit = 0
 
 with colRunning:
     run_counter = 0
     if not is_running:
         with st.empty():
-            colNetProfit, colAvgProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,2,2])
+            colMaxNetProfit, colMaxAvgProfit, colMinNetProfit, colMinAvgProfit, colTimer, colTotalCount, _ = st.columns([1,1,1,1,1,1,1])
             with colTimer:
                 if has_all_vars(['running_start', 'running_actual_end']):
                     current_time: datetime.datetime = st.session_state['running_start']
@@ -642,15 +684,25 @@ with colRunning:
 
                     st.metric("Run Time", f'{minutes:02d}:{seconds:02d}.{milliseconds:03d}')
 
-            with colNetProfit:
+            with colMaxNetProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_max_net_profit'])
-                    st.metric("Highest\nTotal Profits Optimization", f'{current_max_net_profit:.2f} ฿')
+                    st.metric("Highest\nTotal Profits", f'{current_max_net_profit:.2f} ฿')
 
-            with colAvgProfit:
+            with colMaxAvgProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_max_avg_profit'])
-                    st.metric("Highest\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
+                    st.metric("Highest\nAverage Profits", f'{current_max_avg_profit:.2f} ฿')
+
+            with colMinNetProfit:
+                if 'run' in st.session_state:
+                    restore_vars(['current_min_net_profit'])
+                    st.metric("Lowest\nTotal Profits", f'{current_min_net_profit:.2f} ฿')
+
+            with colMinAvgProfit:
+                if 'run' in st.session_state:
+                    restore_vars(['current_min_avg_profit'])
+                    st.metric("Lowest\nAverage Profits", f'{current_min_avg_profit:.2f} ฿')
 
             with colTotalCount:
                 if has_all_vars(['run_counter']):
@@ -664,7 +716,7 @@ with colRunning:
     if is_running:
         with st.empty():
             while is_running:
-                colNetProfit, colAvgProfit, colTimer, colTotalCount, _ = st.columns([2,2,2,2,2])
+                colMaxNetProfit, colMaxAvgProfit, colMinNetProfit, colMinAvgProfit, colTimer, colTotalCount, _ = st.columns([1,1,1,1,1,1,1])
 
                 restore_vars([
                     'p1', 'q1', 'p2', 'q2', 'p3', 'q3', 
@@ -685,18 +737,54 @@ with colRunning:
                     if run_counter == 0:
                         current_max_net_profit = p2p_mech_net_profit
                         current_max_avg_profit = p2p_mech_avg_profit
-                        save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit', 'current_max_avg_profit'])
+                        save_vars([
+                            ('max_mar', 'mar'), 
+                            ('max_bids', 'bids'), 
+                            ('max_transactions', 'transactions'), 
+                            ('max_extras', 'extras'), 
+                            'current_max_net_profit', 'current_max_avg_profit'
+                        ])
+
+                        current_min_net_profit = p2p_mech_net_profit
+                        current_min_avg_profit = p2p_mech_avg_profit
+                        save_vars([
+                            ('min_mar', 'mar'), 
+                            ('min_bids', 'bids'), 
+                            ('min_transactions', 'transactions'), 
+                            ('min_extras', 'extras'), 
+                            'current_min_net_profit', 'current_min_avg_profit'
+                        ])
+
                     else:
                         if ((current_max_net_profit < p2p_mech_net_profit) 
                             or (current_max_net_profit == p2p_mech_net_profit 
-                                and current_max_avg_profit > p2p_mech_avg_profit)
+                                and current_max_avg_profit < p2p_mech_avg_profit)
                         ):
                             current_max_net_profit = p2p_mech_net_profit
                             current_max_avg_profit = p2p_mech_avg_profit
-                            save_vars(['mar', 'bids', 'transactions', 'extras', 'current_max_net_profit', 'current_max_avg_profit'])
-                        else:
-                            if has_all_vars(['mar', 'bids', 'transactions', 'extras']):
-                                restore_vars(['mar', 'bids', 'transactions', 'extras'])
+                            save_vars([
+                                ('max_mar', 'mar'), 
+                                ('max_bids', 'bids'), 
+                                ('max_transactions', 'transactions'), 
+                                ('max_extras', 'extras'), 
+                                'current_max_net_profit', 'current_max_avg_profit'
+                            ])
+
+
+                        if ((current_min_net_profit > p2p_mech_net_profit) 
+                            or (current_min_net_profit == p2p_mech_net_profit 
+                                and current_min_avg_profit > p2p_mech_avg_profit)
+                        ):
+                            current_min_net_profit = p2p_mech_net_profit
+                            current_min_avg_profit = p2p_mech_avg_profit
+                            save_vars([
+                                ('min_mar', 'mar'), 
+                                ('min_bids', 'bids'), 
+                                ('min_transactions', 'transactions'), 
+                                ('min_extras', 'extras'), 
+                                'current_min_net_profit', 'current_min_avg_profit'
+                            ])
+
 
                     current_time: datetime.datetime = datetime.datetime.now()
                     target_time: datetime.datetime = st.session_state['running_end']
@@ -715,24 +803,23 @@ with colRunning:
 
                         # if run_counter > 0:
                         st.rerun()
-
                         break
                     else:
                         st.metric("Running", f'{minutes:02d}:{seconds:02d}')
 
 
-                with colNetProfit:
-                    if not is_running:
-                        st.metric("Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
-                    else:
-                        st.metric("Current Highest\nTotal Profit Optimization", f'{current_max_net_profit:.2f} ฿')
+                with colMaxNetProfit:
+                    st.metric("Highest\nTotal Profit", f'{current_max_net_profit:.2f} ฿')
 
-                with colAvgProfit:
-                    if not is_running:
-                        st.metric("Highest\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
-                    else:
-                        st.metric("Current\nAverage Profits Optimization", f'{current_max_avg_profit:.2f} ฿')
+                with colMaxAvgProfit:
+                    st.metric("Highest\nAverage Profits", f'{current_max_avg_profit:.2f} ฿')
 
+                with colMinNetProfit:
+                    st.metric("Lowest\nTotal Profit", f'{current_min_net_profit:.2f} ฿')
+
+                with colMinAvgProfit:
+                    st.metric("Lowest\nAverage Profits", f'{current_min_avg_profit:.2f} ฿')
+                        
                 with colTotalCount:
                     st.metric("Total Run", f'{run_counter}')
 
@@ -749,242 +836,260 @@ if 'run' in st.session_state and not is_running:
     restore_vars(['sum_q_bid', 'avg_bid'])
     restore_vars(['sum_q_offer', 'avg_offer'])
 
+    tab1, tab2 = st.tabs(['Highest Profit Optimization', 'Lowest Profit Optimization'])
+    tab_functions = (
+        lambda: restore_vars([
+            ('max_mar', 'mar'), 
+            ('max_bids', 'bids'), 
+            ('max_transactions', 'transactions'), 
+            ('max_extras', 'extras')
+        ]),
+        lambda: restore_vars([
+            ('min_mar', 'mar'), 
+            ('min_bids', 'bids'), 
+            ('min_transactions', 'transactions'), 
+            ('min_extras', 'extras')
+        ]),
+    )
+
     st.success('Optimization completed.', icon="✅")
-    colMatching1, colMatching2, colMatching3, res4 = st.columns([1.5,1.5,5,2])
-    with colMatching1:
-        st.markdown(':red[Demand bids for matching:]')
-        st.caption(f'Sum bid quantity = {sum_q_bid}')
-        st.caption(f'Average bid quantity = {sum_q_bid/3:.2f}')
-        st.caption(f'Average bid price = {avg_bid:.2f}')
-        #st.metric(label="Player 1:", value=f"{p1} ฿", delta=f"{(p1-avg_bid):.2f} ฿")
-        st.code(f'''Player 1: 
-        Quantity = {q1}
-        Price* = {p1:.2f}''')
-        st.code(f'''Player 2: 
-        Quantity = {q2}
-        Price* = {p2:.2f}''')
-        st.code(f'''Player 3: 
-        Quantity = {q3}
-        Price* = {p3:.2f}''')
-        st.caption('Before matching:')
-        st.caption('Included wheeling charge')
-    with colMatching2:
-        st.markdown(':blue[Supply offers for matching:]')
-        st.caption(f'Sum offer quantity = {sum_q_offer}')
-        st.caption(f'Average offer quantity = {sum_q_offer/3:.2f}')
-        st.caption(f'Average offer price = {avg_offer:.2f}')
-        #st.metric(label="Player 1:", value=f"{p1} ฿", delta=f"{(p1-avg_bid):.2f} ฿")
-        st.code(f'''Player 4:
-        Quantity = {q4}
-        Price = {p4:.2f}''')
-        st.code(f'''Player 5:
-        Quantity = {q5}
-        Price = {p5:.2f}''')
-        st.code(f'''Player 6:
-        Quantity = {q6}
-        Price = {p6:.2f}''')
-    with colMatching3:
-        restore_vars(['mar', 'bids', 'transactions', 'extras'])
 
-        st.markdown(':orange[Market Clearing Chart:]')
-        t1, t2  = st.tabs(['Network Diagram', 'Demand/Supply Curve'])
-        with t1:
-            st.pyplot(plot_network_diagram(mar.bm,transactions).figure)
-        with t2:    
-            #st.pyplot(pm.plot.trades.plot_trades_as_graph(mar.bm,transactions).figure)
-            st.pyplot(pm.plot.demand_curves.plot_demand_curves(mar.bm.get_df(),None,1,1.2))
-    with res4:
-        st.markdown(':green[Transactions: ]')
-        st.caption('Matched price excluded wheeling charge')
-        df = transactions.get_df()
-        df['userA'] = df['bid'] + 1
-        df['userB'] = df['source'] + 1
-        df['price'] = df['price'].replace(0, np.nan)
-        # Add round to format 2 decimal places
-        df['price'] = df['price'].round(2)
-        st.table(df.loc[:,['userA','userB', 'quantity', 'price']].sort_values(by='userA').style.format({'price': '{:.2f}'}, na_rep='-'))
-        st.latex('P_{p2p} = 0.5*P_{buyer} + 0.5*P_{seller}') 
-        st.text(f"Minimum cleared price = {df['price'].min():.2f} ฿/kWh")
-        st.text(f"Maximum cleared price = {df['price'].max():.2f} ฿/kWh")
-        # st.write('Percentage of the maximum possible traded quantity')
-        # st.write(f"{stats['percentage_traded']}%")
-        # st.write('Percentage of the maximum possible total welfare')
-        # st.write(f"{stats['percentage_welfare']}%")
-        # st.write('Profits per user')
-        # for u in bids.user.unique():
-        #     st.write(f'User {u:2} obtained a profit of {stats["profits"]["player_bid"][u]:0.2f}')
-        # st.write(f'Profit to Market Maker was {stats["profits"]["market"]:0.2f}')
-    with st.expander('Summarize Trading Result:', True):
-        #st.markdown('test')
-        #st.write(stats)
-        # for index, row in df.sort_values(by='userA').iterrows():
-        #     st.write((f"Index: {index} | userA: {row['userA']} | userB: {row['userB']} | quantity: {row['quantity']} | price: {row['price']}"))
-        # players = [':one:',':two:',':three:',':four:',':five:',':six:']
-        # for row in df.sort_values(by='userA').iterrows():
-        #     #icon 
-        #     st.markdown(f"{players[int(row['userA'])]} :white_check_mark")
-        df_result = df.sort_values(by='userA')
-        colResult1, colResult2, colResult3, colResult4, colResult5, colResult6 = st.columns(6)
-        with colResult1:
-            st.markdown(":one: **Player 1 :red[- Buyer: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Bid: 
-            Quantity = {q1}
-            Price* = {p1:.2f}''')
-            if df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-                st.markdown('---')
-                st.markdown(f'**Quantity did not match:**')
-                st.markdown(f':warning: Buy from grid :orange[{q1} kWh]')
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 1].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p1-wheelings[0][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
-                        st.caption(f"{row['price']+wheelings[0][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[0][row['userB']-1]:.2f} ฿/kWh")
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{wheelings[0][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+    for tab, func in zip([tab1, tab2], tab_functions):
+        func()
+        with tab:
+            colMatching1, colMatching2, colMatching3, res4 = st.columns([1.5,1.5,5,2])
+            with colMatching1:
+                st.markdown(':red[Demand bids for matching:]')
+                st.caption(f'Sum bid quantity = {sum_q_bid}')
+                st.caption(f'Average bid quantity = {sum_q_bid/3:.2f}')
+                st.caption(f'Average bid price = {avg_bid:.2f}')
+                #st.metric(label="Player 1:", value=f"{p1} ฿", delta=f"{(p1-avg_bid):.2f} ฿")
+                st.code(f'''Player 1: 
+                Quantity = {q1}
+                Price* = {p1:.2f}''')
+                st.code(f'''Player 2: 
+                Quantity = {q2}
+                Price* = {p2:.2f}''')
+                st.code(f'''Player 3: 
+                Quantity = {q3}
+                Price* = {p3:.2f}''')
+                st.caption('Before matching:')
+                st.caption('Included wheeling charge')
+            with colMatching2:
+                st.markdown(':blue[Supply offers for matching:]')
+                st.caption(f'Sum offer quantity = {sum_q_offer}')
+                st.caption(f'Average offer quantity = {sum_q_offer/3:.2f}')
+                st.caption(f'Average offer price = {avg_offer:.2f}')
+                #st.metric(label="Player 1:", value=f"{p1} ฿", delta=f"{(p1-avg_bid):.2f} ฿")
+                st.code(f'''Player 4:
+                Quantity = {q4}
+                Price = {p4:.2f}''')
+                st.code(f'''Player 5:
+                Quantity = {q5}
+                Price = {p5:.2f}''')
+                st.code(f'''Player 6:
+                Quantity = {q6}
+                Price = {p6:.2f}''')
+            with colMatching3:
+                st.markdown(':orange[Market Clearing Chart:]')
+                tab1, tab2  = st.tabs(['Network Diagram', 'Demand/Supply Curve'])
+                with tab1:
+                    st.pyplot(plot_network_diagram(mar.bm,transactions).figure)
+                with tab2:    
+                    #st.pyplot(pm.plot.trades.plot_trades_as_graph(mar.bm,transactions).figure)
+                    st.pyplot(pm.plot.demand_curves.plot_demand_curves(mar.bm.get_df(),None,1,1.2))
+            with res4:
+                st.markdown(':green[Transactions: ]')
+                st.caption('Matched price excluded wheeling charge')
+                df = transactions.get_df()
+                df['userA'] = df['bid'] + 1
+                df['userB'] = df['source'] + 1
+                df['price'] = df['price'].replace(0, np.nan)
+                # Add round to format 2 decimal places
+                df['price'] = df['price'].round(2)
+                st.table(df.loc[:,['userA','userB', 'quantity', 'price']].sort_values(by='userA').style.format({'price': '{:.2f}'}, na_rep='-'))
+                st.latex('P_{p2p} = 0.5*P_{buyer} + 0.5*P_{seller}') 
+                st.text(f"Minimum cleared price = {df['price'].min():.2f} ฿/kWh")
+                st.text(f"Maximum cleared price = {df['price'].max():.2f} ฿/kWh")
+                # st.write('Percentage of the maximum possible traded quantity')
+                # st.write(f"{stats['percentage_traded']}%")
+                # st.write('Percentage of the maximum possible total welfare')
+                # st.write(f"{stats['percentage_welfare']}%")
+                # st.write('Profits per user')
+                # for u in bids.user.unique():
+                #     st.write(f'User {u:2} obtained a profit of {stats["profits"]["player_bid"][u]:0.2f}')
+                # st.write(f'Profit to Market Maker was {stats["profits"]["market"]:0.2f}')
+            with st.expander('Summarize Trading Result:', True):
+                #st.markdown('test')
+                #st.write(stats)
+                # for index, row in df.sort_values(by='userA').iterrows():
+                #     st.write((f"Index: {index} | userA: {row['userA']} | userB: {row['userB']} | quantity: {row['quantity']} | price: {row['price']}"))
+                # players = [':one:',':two:',':three:',':four:',':five:',':six:']
+                # for row in df.sort_values(by='userA').iterrows():
+                #     #icon 
+                #     st.markdown(f"{players[int(row['userA'])]} :white_check_mark")
+                df_result = df.sort_values(by='userA')
+                colResult1, colResult2, colResult3, colResult4, colResult5, colResult6 = st.columns(6)
+                with colResult1:
+                    st.markdown(":one: **Player 1 :red[- Buyer: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Bid: 
+                    Quantity = {q1}
+                    Price* = {p1:.2f}''')
+                    if df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
                         st.markdown('---')
-                        cnt += 1
-                if q1 != df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0):
-                    q1_buy_from_grid = q1 - df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Buy from grid :orange[{q1_buy_from_grid} kWh]')
+                        st.markdown(f'**Quantity did not match:**')
+                        st.markdown(f':warning: Buy from grid :orange[{q1} kWh]')
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 1].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p1-wheelings[0][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
+                                st.caption(f"{row['price']+wheelings[0][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[0][row['userB']-1]:.2f} ฿/kWh")
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{wheelings[0][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+                                st.markdown('---')
+                                cnt += 1
+                        if q1 != df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0):
+                            q1_buy_from_grid = q1 - df_result.loc[df['userA'] == 1]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Buy from grid :orange[{q1_buy_from_grid} kWh]')
 
-        with colResult2:
-            st.markdown(":two: **Player 2 :red[- Buyer: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Bid: 
-            Quantity = {q2}
-            Price* = {p2:.2f}''')
-            if df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-                st.markdown('---')
-                st.markdown(f'**Quantity did not match:**')
-                st.markdown(f':warning: Buy from grid :orange[{q2} kWh]')
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 2].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p2-wheelings[1][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
-                        st.caption(f"{row['price']+wheelings[1][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[1][row['userB']-1]:.2f} ฿/kWh")
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{wheelings[1][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+                with colResult2:
+                    st.markdown(":two: **Player 2 :red[- Buyer: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Bid: 
+                    Quantity = {q2}
+                    Price* = {p2:.2f}''')
+                    if df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
                         st.markdown('---')
-                        cnt += 1
-                if q2 != df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0):
-                    q2_buy_from_grid = q2 - df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Buy from grid :orange[{q2_buy_from_grid} kWh]')
-        with colResult3:
-            st.markdown(":three: **Player 3 :red[- Buyer: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Bid: 
-            Quantity = {q3}
-            Price* = {p3:.2f}''')
-            if df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-                st.markdown('---')
-                st.markdown(f'**Quantity did not match:**')
-                st.markdown(f':warning: Buy from grid :orange[{q3} kWh]')
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 3].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p3-wheelings[2][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
-                        st.caption(f"{row['price']+wheelings[2][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[2][row['userB']-1]:.2f} ฿/kWh")
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
-                        st.markdown(f"Pay :violet[{wheelings[2][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+                        st.markdown(f'**Quantity did not match:**')
+                        st.markdown(f':warning: Buy from grid :orange[{q2} kWh]')
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 2].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p2-wheelings[1][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
+                                st.caption(f"{row['price']+wheelings[1][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[1][row['userB']-1]:.2f} ฿/kWh")
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{wheelings[1][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+                                st.markdown('---')
+                                cnt += 1
+                        if q2 != df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0):
+                            q2_buy_from_grid = q2 - df_result.loc[df['userA'] == 2]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Buy from grid :orange[{q2_buy_from_grid} kWh]')
+                with colResult3:
+                    st.markdown(":three: **Player 3 :red[- Buyer: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Bid: 
+                    Quantity = {q3}
+                    Price* = {p3:.2f}''')
+                    if df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
                         st.markdown('---')
-                        cnt += 1
-                if q3 != df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0):
-                    q3_buy_from_grid = q3 - df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Buy from grid :orange[{q3_buy_from_grid} kWh]')
-        with colResult4:
-            st.markdown(":four: **Player 4 :blue[- Seller: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Offer: 
-            Quantity = {q4}
-            Price = {p4:.2f}''')
-            if df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 4].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p4)),"normal","Matched price = Pbid + Psharing_profit")
-                        st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
-                        st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
-                        st.markdown('---')
-                        cnt += 1
-                if q4 != df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0):
-                    q4_excess_to_grid = q4 - df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Excess to grid :orange[{q4_excess_to_grid} kWh]')
-        with colResult5:
-            st.markdown(":five: **Player 5 :blue[- Seller: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Offer: 
-            Quantity = {q5}
-            Price = {p5:.2f}''')
-            if df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 5].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p5)),"normal","Matched price = Pbid + Psharing_profit")
-                        st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
-                        st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
-                        st.markdown('---')
-                        cnt += 1
-                if q5 != df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0):
-                    q5_excess_to_grid = q5 - df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Excess to grid :orange[{q5_excess_to_grid} kWh]')
-        with colResult6:
-            st.markdown(":six: **Player 6 :blue[- Seller: ]**")
-            st.markdown('• A.I. Automatic Matching:')
-            st.code(f'''Offer: 
-            Quantity = {q6}
-            Price = {p6:.2f}''')
-            if df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0) == 0:
-                st.write(f"**:x: Didn't match with anyone.**")
-            else:
-                cnt = 1
-                for index, row in df_result.loc[df['userA'] == 6].iterrows():
-                    if row['quantity'] > 0:
-                        st.markdown(f"**Matched pair {cnt}:**")
-                        st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
-                        st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p6)),"normal","Matched price = Pbid + Psharing_profit")
-                        st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
-                        st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
-                        st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
-                        st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
-                        st.markdown('---')
-                        cnt += 1
-                if q6 != df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0):
-                    q6_excess_to_grid = q6 - df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0)
-                    st.markdown(f'**Quantity did not match:**')
-                    st.markdown(f':warning: Excess to grid :orange[{q6_excess_to_grid} kWh]')
+                        st.markdown(f'**Quantity did not match:**')
+                        st.markdown(f':warning: Buy from grid :orange[{q3} kWh]')
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 3].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price* with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh discount".format(row['price']-(p3-wheelings[2][row['userB']-1])),"inverse","Matched price = Pbid + Psharing_profit")
+                                st.caption(f"{row['price']+wheelings[2][row['userB']-1]:.2f} ฿/kWh including wheeling charge {wheelings[2][row['userB']-1]:.2f} ฿/kWh")
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{(row['price']*row['quantity']):.2f} ฿] to Player {row['userB']}")
+                                st.markdown(f"Pay :violet[{wheelings[2][row['userB']-1]*row['quantity']:.2f} ฿] to TSO/DSO")
+                                st.markdown('---')
+                                cnt += 1
+                        if q3 != df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0):
+                            q3_buy_from_grid = q3 - df_result.loc[df['userA'] == 3]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Buy from grid :orange[{q3_buy_from_grid} kWh]')
+                with colResult4:
+                    st.markdown(":four: **Player 4 :blue[- Seller: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Offer: 
+                    Quantity = {q4}
+                    Price = {p4:.2f}''')
+                    if df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 4].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p4)),"normal","Matched price = Pbid + Psharing_profit")
+                                st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
+                                st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
+                                st.markdown('---')
+                                cnt += 1
+                        if q4 != df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0):
+                            q4_excess_to_grid = q4 - df_result.loc[df['userA'] == 4]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Excess to grid :orange[{q4_excess_to_grid} kWh]')
+                with colResult5:
+                    st.markdown(":five: **Player 5 :blue[- Seller: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Offer: 
+                    Quantity = {q5}
+                    Price = {p5:.2f}''')
+                    if df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 5].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p5)),"normal","Matched price = Pbid + Psharing_profit")
+                                st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
+                                st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
+                                st.markdown('---')
+                                cnt += 1
+                        if q5 != df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0):
+                            q5_excess_to_grid = q5 - df_result.loc[df['userA'] == 5]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Excess to grid :orange[{q5_excess_to_grid} kWh]')
+                with colResult6:
+                    st.markdown(":six: **Player 6 :blue[- Seller: ]**")
+                    st.markdown('• A.I. Automatic Matching:')
+                    st.code(f'''Offer: 
+                    Quantity = {q6}
+                    Price = {p6:.2f}''')
+                    if df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0) == 0:
+                        st.write(f"**:x: Didn't match with anyone.**")
+                    else:
+                        cnt = 1
+                        for index, row in df_result.loc[df['userA'] == 6].iterrows():
+                            if row['quantity'] > 0:
+                                st.markdown(f"**Matched pair {cnt}:**")
+                                st.metric("Matched quantity", "{:d} kWh".format(row['quantity']))
+                                st.metric("Matched price with profit","{:.2f} ฿/kWh".format(row['price']),"{:.2f} ฿/kWh profit".format(row['price']-(p6)),"normal","Matched price = Pbid + Psharing_profit")
+                                st.caption('<font color="grey">–<br/>-</font>', unsafe_allow_html=True)
+                                st.markdown(f":white_check_mark: Matched with Player {row['userB']}")
+                                st.markdown(f"Get :violet[{(row['price']*row['quantity']):.2f} ฿] from Player {row['userB']}")
+                                st.markdown('<font color="grey">–</font>', unsafe_allow_html=True)
+                                st.markdown('---')
+                                cnt += 1
+                        if q6 != df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0):
+                            q6_excess_to_grid = q6 - df_result.loc[df['userA'] == 6]['quantity'].sum(axis=0)
+                            st.markdown(f'**Quantity did not match:**')
+                            st.markdown(f':warning: Excess to grid :orange[{q6_excess_to_grid} kWh]')
 else:
     st.info('Edit bids/offers before press button.', icon="ℹ️")
 

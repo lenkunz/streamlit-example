@@ -692,7 +692,7 @@ with colRunning:
             with colMaxAvgProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_max_avg_profit'])
-                    st.metric("Highest\nAverage Profits", f'{current_max_avg_profit:.2f} ฿')
+                    st.metric("Average Profits\n(Highest)", f'{current_max_avg_profit:.2f} ฿')
 
             with colMinNetProfit:
                 if 'run' in st.session_state:
@@ -702,7 +702,7 @@ with colRunning:
             with colMinAvgProfit:
                 if 'run' in st.session_state:
                     restore_vars(['current_min_avg_profit'])
-                    st.metric("Lowest\nAverage Profits", f'{current_min_avg_profit:.2f} ฿')
+                    st.metric("Average Profits\n(Lowest)", f'{current_min_avg_profit:.2f} ฿')
 
             with colTotalCount:
                 if has_all_vars(['run_counter']):
@@ -812,13 +812,13 @@ with colRunning:
                     st.metric("Highest\nTotal Profit", f'{current_max_net_profit:.2f} ฿')
 
                 with colMaxAvgProfit:
-                    st.metric("Highest\nAverage Profits", f'{current_max_avg_profit:.2f} ฿')
+                    st.metric("Average Profits\n(Highest)", f'{current_max_avg_profit:.2f} ฿')
 
                 with colMinNetProfit:
                     st.metric("Lowest\nTotal Profit", f'{current_min_net_profit:.2f} ฿')
 
                 with colMinAvgProfit:
-                    st.metric("Lowest\nAverage Profits", f'{current_min_avg_profit:.2f} ฿')
+                    st.metric("Average Profits(Lowest)", f'{current_min_avg_profit:.2f} ฿')
                         
                 with colTotalCount:
                     st.metric("Total Run", f'{run_counter}')
